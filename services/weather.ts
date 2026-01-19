@@ -1,8 +1,15 @@
 export async function getWeather(location: string) {
-  const API_KEY = "6d261cf3a4714026b4f110558251611";
-  const url = `https://api.weatherapi.com/v1/forecast.json?key=${API_KEY}&q=${location}&days=1&aqi=no`;
+  const WEATHER_API_KEY = process.env.EXPO_PUBLIC_WEATHER_API_KEY;
+  
+  // Fix: Use the same variable name here!
+  const url = `https://api.weatherapi.com/v1/forecast.json?key=${WEATHER_API_KEY}&q=${location}&days=1&aqi=no`;
 
   try {
+    // Optional: Log a warning if the key is missing from .env
+    if (!WEATHER_API_KEY) {
+      console.warn("Missing Weather API Key in environment variables!");
+    }
+
     const res = await fetch(url);
     const json = await res.json();
 
