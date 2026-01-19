@@ -7,10 +7,11 @@ export interface Place {
   googleMapsUri: string;
   latitude: number;
   longitude: number;
-  aiReason?: string; // NEW: Optional field for the AI's explanation
+  aiReason?: string; 
+  photoUrl?: string;
 }
-
-const FIELD_MASK = 'places.displayName,places.formattedAddress,places.rating,places.googleMapsUri,places.location';
+const API_KEY = process.env.EXPO_PUBLIC_GOOGLE_PLACES_API_KEY;
+const FIELD_MASK = 'places.displayName,places.formattedAddress,places.rating,places.googleMapsUri,places.location,places.photos';
 
 export async function getTextSearchPlace(
   lat: number, 
@@ -51,14 +52,23 @@ export async function getTextSearchPlace(
 
   console.log(`Searching for ${query} near: ${lat}, ${lng} within ${radius}m`);
 
-  return (data.places || []).map((p: any) => ({
-    name: p.displayName.text,
-    address: p.formattedAddress,
-    rating: p.rating || 0,
-    type: query,
-    googleMapsUri: p.googleMapsUri,
-    // EXTRACT THE COORDINATES HERE:
-    latitude: p.location.latitude,
-    longitude: p.location.longitude
-  }));
+  return (data.places || []).map((p: any) => {
+    // Construct the Photo URL if a photo exists
+    let photoUrl = '';
+    if (p.photos && p.photos.length > 0) {
+      const photoName = p.photos[0].name; // Format: places/PLACE_ID/photos/PHOTO_ID
+      photoUrl = `https://places.googleapis.com/v1/${photoName}/media?key=${API_KEY}&maxWidthPx=800`;
+    }
+
+    return {
+      name: p.displayName.text,
+      address: p.formattedAddress,
+      rating: p.rating || 0,
+      type: query,
+      googleMapsUri: p.googleMapsUri,
+      latitude: p.location.latitude,
+      longitude: p.location.longitude,
+      photoUrl: photoUrl // Pass it to the object
+    };
+  });
 }

@@ -2,9 +2,11 @@ import { useEffect, useState } from "react";
 import { View, Text, ActivityIndicator, StyleSheet, ScrollView, TouchableOpacity, Linking } from "react-native";
 import * as Location from "expo-location";
 import { getWeather } from "../services/weather";
-import WeatherChart from "../component/WeatherChart";
+import WeatherHeader from "../component/WeatherHeader";
 import { getActivityRecommendation } from "../utils/activityRecomender"; // This is now an async function!
 import { Place } from "../services/places";
+import { Image } from "react-native";
+import { BlurView } from 'expo-blur';
 
 // Define state for coordinates
 interface Coords {
@@ -129,26 +131,16 @@ export default function HomeScreen() {
 
   return (
     <ScrollView style={styles.container}>
-      <Text style={styles.title}>Weather in {city}</Text>
-      <Text style={styles.temp}>{data.current.temp_c}°C</Text>
-      
-      <WeatherChart
-        temperatures={data.forecast.forecastday[0].hour.map(
-          (h: any) => h.temp_c
-        )}
-      />
-
-      {/* Add this inside your ScrollView, above the recommendation list */}
+      <WeatherHeader data={data} city={city} />
       <TouchableOpacity 
           style={styles.rerollButton}
           onPress={refreshRecommendation} // We need to define this function
       >
-          <Text style={styles.rerollText}>🔄 Suggest Something Else</Text>
+          <Text style={styles.rerollText}>REFRESH</Text>
       </TouchableOpacity>
 
       <Text style={styles.sectionHeader}>Your Plan for Today</Text>
       
-      {/* 1. Loading State for Recommendations */}
       {loadingRecommendations && (
           <View style={styles.loadingContainer}>
               <ActivityIndicator size="small" color="#1e90ff" />
@@ -156,32 +148,43 @@ export default function HomeScreen() {
           </View>
       )}
 
-      {/* 2. Empty State (When the model returns 0 results) */}
       {!loadingRecommendations && recommendation.length === 0 && (
           <View style={styles.emptyContainer}>
               <Text style={styles.emptyText}>No suitable activities found for current conditions. Maybe stay in and relax?</Text>
           </View>
       )}
 
-      {/* 3. The Actual List (Your existing map logic) */}
       {recommendation.map((place, index) => (
-          <View key={index} style={styles.card}>
-              <View style={styles.stepBadge}>
-                  <Text style={styles.stepText}>STEP {index + 1}</Text>
+          <BlurView 
+            key={index} 
+            intensity={15} // Adjust for more/less blur
+            style={styles.card}
+          >
+              {place.photoUrl ? (
+              <Image 
+                source={{ uri: place.photoUrl }} 
+                style={styles.placeImage} 
+                resizeMode="cover"
+              />
+            ) : (
+              <View style={[styles.placeImage, { backgroundColor: '#eee', justifyContent: 'center', alignItems: 'center' }]}>
+                <Text style={{ color: '#999' }}>No Image Available</Text>
               </View>
-              
+            )}
+            <View style={styles.cardContent}>
               <Text style={styles.placeName}>{place.name}</Text>
               <Text style={styles.placeAddress}>{place.address}</Text>
               <Text style={styles.rating}>⭐ {place.rating}</Text>
               <Text style={styles.aiReason}>{place.aiReason}</Text>
 
               <TouchableOpacity 
-                  style={styles.mapButton}
+                  style={styles.rerollButton}
                   onPress={() => Linking.openURL(place.googleMapsUri)}
               >
                   <Text style={styles.mapButtonText}>View on Google Maps</Text>
               </TouchableOpacity>
-          </View>
+            </View>
+          </BlurView>
       ))}
       
       {/* Add extra padding at the bottom for scrolling */}
@@ -191,35 +194,42 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f5f5f5', padding: 20 },
-  title: { fontSize: 24, fontWeight: 'bold', color: '#333' },
-  temp: { fontSize: 48, fontWeight: '300', color: '#1e90ff' },
-  sectionHeader: { fontSize: 20, fontWeight: 'bold', marginTop: 30, marginBottom: 15 },
+  container: { flex: 1, backgroundColor: '#1d1a39', padding: 20 },
+  title: {
+    fontFamily: 'Nothing',
+    fontSize: 24,
+    color: '#000',
+    textTransform: 'uppercase',
+    letterSpacing: 2, // Essential for the dot-matrix aesthetic
+  },
+  sectionHeader: {
+    fontFamily: 'Nothing',
+    fontSize: 26,
+    color: '#fff',
+    marginTop: 20,
+    textTransform: 'uppercase',
+    padding: 10,
+  },
   card: { 
-    backgroundColor: '#fff', 
-    borderRadius: 12, 
-    padding: 16, 
-    marginBottom: 20,
-    // Shadow for iOS
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4,
-    // Elevation for Android
-    elevation: 3 
-  },
-  stepBadge: { 
-    backgroundColor: '#1e90ff', 
-    alignSelf: 'flex-start', 
-    paddingHorizontal: 8, 
-    paddingVertical: 4, 
-    borderRadius: 4, 
-    marginBottom: 8 
-  },
-  stepText: { color: '#fff', fontSize: 10, fontWeight: 'bold' },
-  placeName: { fontSize: 18, fontWeight: 'bold', color: '#333' },
-  placeAddress: { fontSize: 14, color: '#666', marginVertical: 4 },
-  aiReason: { fontSize: 14, color: '#666', marginVertical: 4 },
-  rating: { fontSize: 14, color: '#ffa500', marginBottom: 12 },
-  mapButton: { backgroundColor: '#eef6ff', padding: 10, borderRadius: 8, alignItems: 'center' },
-  mapButtonText: { color: '#1e90ff', fontWeight: 'bold' },
+  borderRadius: 20, 
+  marginBottom: 20,
+  overflow: 'hidden', // Essential for BlurView to respect borderRadius
+  borderWidth: 1,
+  borderColor: 'rgba(255, 255, 255, 0.1)', // Very subtle white border
+  backgroundColor: 'rgba(255, 255, 255, 0.05)', // Almost transparent
+},
+cardContent: {
+    padding: 20, // This creates the "breathing room" for your text
+},
+placeName: { fontFamily: 'Roboto', fontSize: 16, color: '#fff' },
+  placeAddress: { fontFamily: 'Roboto', fontSize: 14, color: '#fff', marginVertical: 4 },
+  aiReason: { fontFamily: 'Roboto', fontSize: 14, color: '#fff', marginVertical: 4 },
+  rating: { fontFamily: 'Roboto', fontSize: 14, color: '#ffa500', marginBottom: 12 },
+  mapButtonText: { 
+  fontFamily: 'Nothing',
+  color: '#fff',
+  fontSize: 16, 
+},
   loadingContainer: {
     padding: 20,
     alignItems: 'center',
@@ -250,11 +260,21 @@ const styles = StyleSheet.create({
     lineHeight: 22
   },
   rerollButton: {
-    backgroundColor: '#333',
+    backgroundColor: '#AE445A',
     padding: 12,
     borderRadius: 8,
     alignItems: 'center',
     marginVertical: 15
 },
-rerollText: { color: '#fff', fontWeight: 'bold' }
+rerollText: { 
+  fontFamily: 'Nothing',
+  color: '#fff',
+  fontSize: 22, 
+},
+placeImage: {
+    width: '100%',
+    height: 150,
+    borderTopLeftRadius: 12,
+    borderTopRightRadius: 12,
+  },
 });
