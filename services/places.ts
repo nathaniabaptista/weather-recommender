@@ -23,10 +23,10 @@ export async function getTextSearchPlace(
   const requestBody = {
     textQuery: query,
     maxResultCount: 1,
-    locationRestriction: { 
+    locationBias: { 
       circle: {
         center: { latitude: lat, longitude: lng },
-        radius: radius // This strictly locks the search to your 30km/7km radius
+        radius: radius 
       }
     }
   };
@@ -42,6 +42,12 @@ export async function getTextSearchPlace(
   });
 
   const data = await response.json();
+
+  console.log(`DEBUG: Google returned ${data.places?.length || 0} results for "${query}"`);
+
+  if (data.places && data.places.length > 0) {
+    console.log("FIRST RESULT NAME:", data.places[0].displayName?.text);
+  }
 
   console.log(`Searching for ${query} near: ${lat}, ${lng} within ${radius}m`);
 

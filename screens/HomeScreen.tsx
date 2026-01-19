@@ -61,21 +61,20 @@ export default function HomeScreen() {
 
     let location = await Location.getCurrentPositionAsync({});
     const { latitude, longitude } = location.coords;
-
-    // CRITICAL LOG: Check your terminal for these numbers!
-    console.log("DEBUG: Phone GPS Coordinates:", latitude, longitude); 
-
     setCoords({ latitude, longitude });
 
-    // 2. Reverse geocode → Get city name
     let geo = await Location.reverseGeocodeAsync({ latitude, longitude });
 
     if (geo.length > 0) {
-      setCity(geo[0].city || "Unknown");
-      // Pass the city name (location) to loadWeather
-      loadWeather(geo[0].city || "Goa"); 
+      const address = geo[0];
+      
+      // Construct a specific query: "Cuncolim, Goa, India"
+      const detailedQuery = `${address.city || ''}, ${address.region || ''}, ${address.country || ''}`;
+      
+      setCity(address.city || "Unknown");
+      loadWeather(detailedQuery); 
     } else {
-      loadWeather("Goa"); // default fallback
+      loadWeather("Goa, India"); 
     }
   };
 

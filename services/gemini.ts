@@ -13,7 +13,9 @@ export async function getAICategories(condition: string, time: string, location:
   // services/gemini.ts
 
     const prompt = `
-    You are an expert local guide AI with deep knowledge of ${location}. 
+    You are an expert local guide AI with deep knowledge of ${location}.
+    Your goal is to suggest a sophisticated, high-quality itinerary that avoids "tourist traps" and generic eateries. 
+    - CATEGORY MIX: Ensure a variety of activities. Do not suggest more than 2 food-related stops.
     
     CURRENT CONTEXT:
     - User Location: ${location}
@@ -31,12 +33,15 @@ export async function getAICategories(condition: string, time: string, location:
     CONSTRAINTS:
     - Activities must be culture-specific (e.g., if in Goa, include seasonal shacks, heritage sites, or rain-friendly cafes).
     - Distances must follow the 30km (start) and 5-10km (subsequent) rule.
+    - Preference for places with a "vibe" (e.g., colonial charm, sea views, or lush gardens).
+    - For food, suggest iconic institutions or well rated hidden gems (e.g., Martin's Corner, Zeebop, or Fisherman's Wharf) rather than generic "hotels".
     
     SEARCH OPTIMIZATION RULE:
-    The "activity" field must be a short 1-3 word CATEGORY only. 
-    DO NOT include city or area names (like Morjim, Ashwem, Goa). 
-    - ❌ BAD: "beach club Morjim"
-    - ✅ GOOD: "beach club" or "cocktail bar" or "seafood restaurant"
+    - The "activity" field MUST be the specific name of a landmark or business (e.g., "Palacio do Deao" or "Betul Beach").
+    - If a specific name isn't used, use a highly specific category (e.g., "seafood restaurant" or "Portuguese mansion").
+    - ❌ BAD: "Heritage Home" (Too vague)
+    - ✅ GOOD: "Palacio do Deao" (Specific Entity)
+    - ✅ GOOD: "Betul Lighthouse" (Specific Landmark)
     
     OUTPUT FORMAT:
     Return ONLY a JSON object:
